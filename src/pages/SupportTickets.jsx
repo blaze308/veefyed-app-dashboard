@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { collection, getDocs, query, orderBy, doc, updateDoc } from "firebase/firestore";
-import { db } from "../firebase/config";
+import { db } from "../firebase/firebase";
 
 const SupportTickets = () => {
   const [tickets, setTickets] = useState([]);

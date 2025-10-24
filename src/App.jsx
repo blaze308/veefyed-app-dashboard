@@ -16,8 +16,8 @@ import Reviews from "./pages/Reviews";
 import VerificationRequests from "./pages/VerificationRequests";
 import Reports from "./pages/Reports";
 import InviteManagement from "./pages/InviteManagement";
-import Insights from "./pages/Insights";
-import InsightForm from "./pages/InsightForm";
+import Insights from "./pages/SkincareInsights";
+import InsightForm from "./pages/SkincareInsightForm";
 import SupportTickets from "./pages/SupportTickets";
 
 function App() {

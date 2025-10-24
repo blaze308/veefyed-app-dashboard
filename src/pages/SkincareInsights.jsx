@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import SchedulingService from "../services/schedulingService";
-import ArticleModal from "../components/ArticleModal";
+import ArticleModal from "../components/InsightModal";
 import MobileInsightCard from "../components/MobileInsightCard";
 import {
   SkincareInsight,
