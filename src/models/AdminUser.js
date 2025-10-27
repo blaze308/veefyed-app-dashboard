@@ -341,6 +341,7 @@ export const ROLE_PERMISSIONS = {
     ADMIN_PERMISSIONS.MANAGE_VERIFICATION_REQUESTS,
     ADMIN_PERMISSIONS.MANAGE_SUPPORT_TICKETS,
     ADMIN_PERMISSIONS.MANAGE_REVIEWS,
-    // Note: Support has read-only access - they can view but have limited modification rights
+    ADMIN_PERMISSIONS.MANAGE_PRODUCTS, // Support can now manage insights/products
+    ADMIN_PERMISSIONS.VIEW_ANALYTICS,
   ],
 };

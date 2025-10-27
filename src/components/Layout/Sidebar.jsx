@@ -105,7 +105,7 @@ const Sidebar = () => {
           />
         </svg>
       ),
-      roles: ["super_admin", "admin"],
+      roles: ["super_admin", "admin", "support"],
     },
     {
       name: "Support Tickets",

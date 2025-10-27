@@ -131,7 +131,7 @@ function App() {
               path="/insights"
               element={
                 <ProtectedRoute>
-                  <RoleGuard allowedRoles={["admin", "super_admin"]}>
+                  <RoleGuard allowedRoles={["admin", "super_admin", "support"]}>
                     <DashboardLayout>
                       <Insights />
                     </DashboardLayout>
@@ -143,7 +143,7 @@ function App() {
               path="/insights/new"
               element={
                 <ProtectedRoute>
-                  <RoleGuard allowedRoles={["admin", "super_admin"]}>
+                  <RoleGuard allowedRoles={["admin", "super_admin", "support"]}>
                     <InsightForm />
                   </RoleGuard>
                 </ProtectedRoute>
@@ -153,7 +153,7 @@ function App() {
               path="/insights/:id/edit"
               element={
                 <ProtectedRoute>
-                  <RoleGuard allowedRoles={["admin", "super_admin"]}>
+                  <RoleGuard allowedRoles={["admin", "super_admin", "support"]}>
                     <InsightForm />
                   </RoleGuard>
                 </ProtectedRoute>

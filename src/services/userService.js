@@ -1,5 +1,5 @@
 import { db } from "../firebase/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, where } from "firebase/firestore";
 
 class UserService {
   constructor() {
@@ -208,6 +208,77 @@ class UserService {
 
     // Check if permission is in user's permissions array
     return userData.permissions && userData.permissions.includes(permission);
+  }
+
+  /**
+   * Get all support staff (users with support role)
+   * @returns {Promise<Array>} Array of support staff users
+   */
+  async getSupportStaff() {
+    try {
+      const usersRef = collection(db, this.usersCollection);
+      const q = query(usersRef, where("role", "==", "support"));
+      const snapshot = await getDocs(q);
+
+      return snapshot.docs.map(doc => ({
+        uid: doc.id,
+        ...doc.data(),
+      }));
+    } catch (error) {
+      console.error("Error fetching support staff:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get all developers (users with admin or super_admin role)
+   * @returns {Promise<Array>} Array of developer users
+   */
+  async getDevelopers() {
+    try {
+      const usersRef = collection(db, this.usersCollection);
+      // Get both admin and super_admin users
+      const adminQuery = query(usersRef, where("role", "==", "admin"));
+      const superAdminQuery = query(usersRef, where("role", "==", "super_admin"));
+      
+      const [adminSnapshot, superAdminSnapshot] = await Promise.all([
+        getDocs(adminQuery),
+        getDocs(superAdminQuery),
+      ]);
+
+      const admins = adminSnapshot.docs.map(doc => ({
+        uid: doc.id,
+        ...doc.data(),
+      }));
+
+      const superAdmins = superAdminSnapshot.docs.map(doc => ({
+        uid: doc.id,
+        ...doc.data(),
+      }));
+
+      return [...admins, ...superAdmins];
+    } catch (error) {
+      console.error("Error fetching developers:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get all admin users (support, admin, super_admin)
+   * @returns {Promise<Array>} Array of all admin users
+   */
+  async getAllAdminUsers() {
+    try {
+      const [supportStaff, developers] = await Promise.all([
+        this.getSupportStaff(),
+        this.getDevelopers(),
+      ]);
+
+      return [...supportStaff, ...developers];
+    } catch (error) {
+      console.error("Error fetching admin users:", error);
+      return [];
+    }
   }
 }
 
