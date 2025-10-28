@@ -331,31 +331,7 @@
   }
 }
 
-/* Dark mode support for mobile */
-@media (prefers-color-scheme: dark) {
-  .insight-card {
-    background: #1f2937;
-    border-color: #374151;
-    color: #f9fafb;
-  }
-
-  .insight-card-title {
-    color: #f9fafb;
-  }
-
-  .header-mobile {
-    background: #1f2937;
-    border-color: #374151;
-  }
-
-  .header-title {
-    color: #f9fafb;
-  }
-
-  .sidebar-content {
-    background: #1f2937;
-  }
-}
+/* Dark mode support removed - keeping light theme only */
 
 /* Print styles */
 @media print {
