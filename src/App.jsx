@@ -144,7 +144,9 @@ function App() {
               element={
                 <ProtectedRoute>
                   <RoleGuard allowedRoles={["admin", "super_admin", "support"]}>
-                    <InsightForm />
+                    <DashboardLayout>
+                      <InsightForm />
+                    </DashboardLayout>
                   </RoleGuard>
                 </ProtectedRoute>
               }
@@ -154,7 +156,9 @@ function App() {
               element={
                 <ProtectedRoute>
                   <RoleGuard allowedRoles={["admin", "super_admin", "support"]}>
-                    <InsightForm />
+                    <DashboardLayout>
+                      <InsightForm />
+                    </DashboardLayout>
                   </RoleGuard>
                 </ProtectedRoute>
               }
