@@ -204,8 +204,8 @@ const SkincareInsightForm = () => {
       // Create a proper SkincareInsight instance
       const insightToSave = new SkincareInsight({
         ...insight,
-        createdBy: insight.createdBy || user.uid,
-        updatedBy: user.uid,
+        createdBy: insight.createdBy || user?.uid || "unknown",
+        updatedBy: user?.uid || "unknown",
         metaTitle: insight.metaTitle || insight.title,
         metaDescription: insight.metaDescription || insight.description,
       });
@@ -275,8 +275,8 @@ const SkincareInsightForm = () => {
       const insightToSave = new SkincareInsight({
         ...insight,
         status: "draft",
-        createdBy: insight.createdBy || user.uid,
-        updatedBy: user.uid,
+        createdBy: insight.createdBy || user?.uid || "unknown",
+        updatedBy: user?.uid || "unknown",
         metaTitle: insight.metaTitle || insight.title,
         metaDescription: insight.metaDescription || insight.description,
       });
@@ -314,8 +314,8 @@ const SkincareInsightForm = () => {
         ...insight,
         status: "published",
         publishDate: publishDate,
-        createdBy: insight.createdBy || user.uid,
-        updatedBy: user.uid,
+        createdBy: insight.createdBy || user?.uid || "unknown",
+        updatedBy: user?.uid || "unknown",
         metaTitle: insight.metaTitle || insight.title,
         metaDescription: insight.metaDescription || insight.description,
       });

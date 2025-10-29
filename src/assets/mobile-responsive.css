@@ -374,7 +374,7 @@
   }
 
   .tab-navigation button[aria-selected="true"] {
-    background: #000;
+    background: #3b82f6;
     color: #fff;
   }
 }

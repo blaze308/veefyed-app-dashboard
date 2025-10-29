@@ -127,9 +127,9 @@ export const AuthProvider = ({ children }) => {
     signOut,
     clearError,
     isAuthenticated: !!user,
-    isAdmin: user?.isAdmin || false,
-    isSupport: user?.isSupport || false,
-    isSuperAdmin: user?.isSuperAdmin || false,
+    isAdmin: user?.role === 'admin' || user?.role === 'super_admin' || user?.isAdmin || false,
+    isSupport: user?.role === 'support' || user?.role === 'admin' || user?.role === 'super_admin' || user?.isSupport || false,
+    isSuperAdmin: user?.role === 'super_admin' || user?.isSuperAdmin || false,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

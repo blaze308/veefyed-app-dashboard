@@ -512,8 +512,8 @@ const EnhancedSkincareInsightForm = () => {
       const insightToSave = new SkincareInsight({
         ...finalInsight,
         status: "draft",
-        createdBy: finalInsight.createdBy || user.uid,
-        updatedBy: user.uid,
+        createdBy: finalInsight.createdBy || user?.uid || "unknown",
+        updatedBy: user?.uid || "unknown",
         metaTitle: finalInsight.metaTitle || finalInsight.title,
         metaDescription:
           finalInsight.metaDescription || finalInsight.description,
@@ -591,8 +591,8 @@ const EnhancedSkincareInsightForm = () => {
         ...finalInsight,
         status: "published",
         publishDate: publishDate,
-        createdBy: finalInsight.createdBy || user.uid,
-        updatedBy: user.uid,
+        createdBy: finalInsight.createdBy || user?.uid || "unknown",
+        updatedBy: user?.uid || "unknown",
         metaTitle: finalInsight.metaTitle || finalInsight.title,
         metaDescription:
           finalInsight.metaDescription || finalInsight.description,

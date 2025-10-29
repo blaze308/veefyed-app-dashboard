@@ -52,11 +52,16 @@ const SupportTickets = () => {
   };
 
   const handleAssignToMe = async (ticketId) => {
+    if (!user?.uid) {
+      alert("User not authenticated");
+      return;
+    }
+
     try {
       await ticketService.assignTicket(
         ticketId,
         user.uid,
-        user.preferredName
+        user.preferredName || user.displayName || user.email || "Unknown"
       );
       await loadData();
       if (selectedTicket?.id === ticketId) {
@@ -151,11 +156,16 @@ const SupportTickets = () => {
   const handleAddNote = async () => {
     if (!selectedTicket || !newNote.trim()) return;
 
+    if (!user?.uid) {
+      alert("User not authenticated");
+      return;
+    }
+
     try {
       await ticketService.addInternalNote(
         selectedTicket.id,
         user.uid,
-        user.preferredName,
+        user.preferredName || user.displayName || user.email || "Unknown",
         newNote
       );
       
@@ -800,7 +810,7 @@ const SupportTickets = () => {
                 <a
                   href={`mailto:${selectedTicket.email}?subject=Re: Support Ticket - ${selectedTicket.issueType}`}
                   onClick={() => handleRecordResponse(selectedTicket.id)}
-                  className="flex-1 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition-colors text-center"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-center"
                 >
                   Reply via Email
                 </a>
