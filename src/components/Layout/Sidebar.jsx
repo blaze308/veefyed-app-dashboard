@@ -1,8 +1,9 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import "../../assets/modern-dashboard.css";
 
-const Sidebar = () => {
+const Sidebar = ({ onClose }) => {
   const { user, signOut } = useAuth();
   const location = useLocation();
 
@@ -163,79 +164,70 @@ const Sidebar = () => {
   );
 
   return (
-    <div className="bg-white w-64 min-h-screen flex flex-col border-r border-gray-200">
+    <div className="modern-sidebar w-64 min-h-screen flex flex-col">
       {/* Logo/Brand */}
-      <div className="flex items-center h-16 px-4 border-b border-gray-200">
-        <div className="flex items-center">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <svg
-              className="w-5 h-5 text-white"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          </div>
-          <span className="ml-2 text-gray-900 font-semibold">Veefyed</span>
+      <div className="modern-sidebar-logo">
+        <div className="modern-sidebar-logo-icon">
+          <svg
+            className="w-5 h-5 text-white"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
         </div>
+        <span className="modern-sidebar-logo-text">Veefyed</span>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-4 space-y-1">
+      <nav className="modern-sidebar-nav">
         {filteredNavigation.map((item) => {
-          const isActive = location.pathname === item.href;
+          const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/');
           return (
             <Link
               key={item.name}
               to={item.href}
-              className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
-                isActive
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-              }`}
+              onClick={onClose}
+              className={`modern-nav-item ${isActive ? 'active' : ''}`}
             >
-              <div
-                className={`mr-3 ${
-                  isActive
-                    ? "text-blue-600"
-                    : "text-gray-400 group-hover:text-gray-600"
-                }`}
-              >
+              <div className="modern-nav-icon">
                 {item.icon}
               </div>
               {item.name}
+              {item.badge && (
+                <span className="modern-nav-badge">{item.badge}</span>
+              )}
             </Link>
           );
         })}
       </nav>
 
       {/* User Profile */}
-      <div className="border-t border-gray-200 p-4">
-        <div className="flex items-center mb-3">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-            <span className="text-white text-sm font-medium">
-              {user?.initials}
-            </span>
+      <div className="modern-user-profile">
+        <div className="modern-user-info">
+          <div className="modern-user-avatar">
+            {user?.initials || user?.fullName?.charAt(0) || 'U'}
           </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium text-gray-900">
-              {user?.preferredName}
-            </p>
-            <p className="text-xs text-gray-500">
+          <div className="modern-user-details">
+            <div className="modern-user-name">
+              {user?.preferredName || user?.fullName || user?.email}
+            </div>
+            <div className="modern-user-role">
+              <span className="modern-user-role-badge"></span>
               {user?.role === "super_admin"
                 ? "Super Admin"
                 : user?.role === "admin"
                 ? "Admin"
                 : "Support"}
-            </p>
+            </div>
           </div>
         </div>
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          className="modern-signout-btn"
         >
           <svg
-            className="w-5 h-5 mr-3"
+            className="modern-signout-icon"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
