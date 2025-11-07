@@ -19,6 +19,7 @@ import InviteManagement from "./pages/InviteManagement";
 import Insights from "./pages/SkincareInsights";
 import InsightForm from "./pages/SkincareInsightForm";
 import SupportTickets from "./pages/SupportTickets";
+import Support from "./pages/Support";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
             {/* Public Routes */}
             <Route path="/signin" element={<Signin />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/support" element={<Support />} />
 
             {/* Protected Routes with Sidebar Layout */}
             <Route

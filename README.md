@@ -36,6 +36,15 @@ A React-based admin panel for managing the Veefyed mobile app backend. This appl
 - Form validation with highlighted field errors
 - Professional dashboard interface
 
+✅ **Public Support Page**
+
+- Apple App Store compliant support page
+- Accessible without authentication
+- Contact information and FAQs
+- Privacy policy and terms of service links
+- Mobile-responsive design
+- See [SUPPORT_PAGE_INDEX.md](SUPPORT_PAGE_INDEX.md) for complete documentation
+
 ## Tech Stack
 
 - **Frontend**: React 19, Vite
@@ -166,6 +175,36 @@ After the first user, all new admins must be invited:
 - User profile management
 - Role-based feature access
 
+### Public Support Page
+
+The admin app includes a **public support page** at `/support` that is accessible without authentication. This page is designed to meet Apple App Store requirements for iOS app submissions.
+
+**Access URLs:**
+- Local: `http://localhost:5173/support`
+- Production: `https://your-admin-domain.com/support`
+
+**Features:**
+- Contact information (email, website)
+- Frequently asked questions
+- App information
+- Privacy policy and terms of service links
+- Mobile-responsive design
+- No authentication required
+
+**Documentation:**
+For complete setup and customization instructions, see:
+- **Quick Start:** [SUPPORT_PAGE_QUICK_START.md](SUPPORT_PAGE_QUICK_START.md)
+- **Full Index:** [SUPPORT_PAGE_INDEX.md](SUPPORT_PAGE_INDEX.md)
+
+**Customization:**
+Before deploying, update the following in `src/pages/Support.jsx`:
+1. Email address (currently: `support@veefyed.com`)
+2. Website URL (currently: `https://veefyed.com`)
+3. Privacy policy URL
+4. Terms of service URL
+
+See [SUPPORT_PAGE_BEFORE_AFTER.md](SUPPORT_PAGE_BEFORE_AFTER.md) for detailed examples.
+
 ## Development
 
 ### Project Structure
@@ -174,7 +213,8 @@ After the first user, all new admins must be invited:
 admin/
 ├── src/
 │   ├── components/        # Reusable components
-│   │   └── ProtectedRoute.jsx
+│   │   ├── ProtectedRoute.jsx
+│   │   └── RoleGuard.jsx
 │   ├── contexts/         # React contexts
 │   │   └── AuthContext.jsx
 │   ├── models/           # Data models
@@ -182,13 +222,15 @@ admin/
 │   ├── pages/            # Page components
 │   │   ├── Dashboard.jsx
 │   │   ├── Signin.jsx
-│   │   └── Signup.jsx
+│   │   ├── Signup.jsx
+│   │   └── Support.jsx   # Public support page (no auth required)
 │   ├── services/         # API services
 │   │   └── authService.js
 │   └── firebase/         # Firebase configuration
 │       └── firebase.js
 ├── package.json
-└── README.md
+├── README.md
+└── SUPPORT_PAGE_*.md     # Support page documentation
 ```
 
 ### Adding New Features
