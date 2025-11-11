@@ -1,14 +1,4 @@
 import React, { useState, useEffect } from "react";
-import {
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  limit,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
-import { db } from "../firebase/firebase";
 import { useAuth } from "../contexts/AuthContext";
 import {
   Report,
@@ -18,6 +8,7 @@ import {
   getTypeDisplayName,
 } from "../models/Report";
 import { userService } from "../services/userService";
+import reportService from "../services/reportService";
 
 const Reports = () => {
   const { user } = useAuth();
@@ -26,24 +17,22 @@ const Reports = () => {
   const [filter, setFilter] = useState("pending");
   const [selectedReport, setSelectedReport] = useState(null);
   const [userDetails, setUserDetails] = useState({}); // Store fetched user details
+  const [supportStaff, setSupportStaff] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
 
   useEffect(() => {
-    loadReports();
+    loadData();
   }, []);
 
-  const loadReports = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const q = query(
-        collection(db, "reports"),
-        orderBy("createdAt", "desc"),
-        limit(100)
-      );
-
-      const querySnapshot = await getDocs(q);
-      const reportsData = querySnapshot.docs.map((doc) =>
-        Report.fromFirestore(doc)
-      );
+      const [reportsData, supportData, statsData] = await Promise.all([
+        reportService.getAllReports(),
+        userService.getSupportStaff(),
+        reportService.getReportStats(),
+      ]);
 
       // Extract unique user IDs from reports
       const userIds = [
@@ -57,8 +46,10 @@ const Reports = () => {
       }
 
       setReports(reportsData);
+      setSupportStaff(supportData);
+      setStats(statsData);
     } catch (error) {
-      console.error("Error loading reports:", error);
+      console.error("Error loading data:", error);
     } finally {
       setLoading(false);
     }
@@ -69,47 +60,76 @@ const Reports = () => {
       const statusValue =
         typeof newStatus === "string" ? newStatus : newStatus.value;
 
-      const updateData = {
-        status: statusValue,
-        updatedAt: new Date(),
-        reviewedBy: user?.uid,
-      };
-
-      if (notes) {
-        updateData.adminNotes = notes;
+      await reportService.updateReportStatus(reportId, statusValue, notes);
+      await loadData();
+      
+      if (selectedReport?.id === reportId) {
+        const updated = await reportService.getReportById(reportId);
+        setSelectedReport(updated);
       }
-
-      if (statusValue === "approved") {
-        updateData.resolutionDetails = notes || "Report approved by admin";
-      }
-
-      await updateDoc(doc(db, "reports", reportId), updateData);
-
-      // Update local state
-      setReports((prev) =>
-        prev.map((report) =>
-          report.id === reportId
-            ? report.copyWith({
-                status: ReportStatus.fromString(statusValue),
-                adminNotes: notes || report.adminNotes,
-                updatedAt: new Date(),
-                resolutionDetails:
-                  statusValue === "approved"
-                    ? notes || "Report approved by admin"
-                    : report.resolutionDetails,
-              })
-            : report
-        )
-      );
-
-      setSelectedReport(null);
     } catch (error) {
       console.error("Error updating report status:", error);
+      alert("Failed to update report status");
+    }
+  };
+
+  const handleAssignToMe = async (reportId) => {
+    if (!user?.uid) {
+      alert("User not authenticated");
+      return;
+    }
+
+    try {
+      await reportService.assignReport(
+        reportId,
+        user.uid,
+        user.preferredName || user.displayName || user.email || "Unknown"
+      );
+      await loadData();
+      if (selectedReport?.id === reportId) {
+        const updated = await reportService.getReportById(reportId);
+        setSelectedReport(updated);
+      }
+    } catch (error) {
+      console.error("Error assigning report:", error);
+      alert("Failed to assign report");
+    }
+  };
+
+  const handleAssignToStaff = async (reportId, staffId, staffName) => {
+    try {
+      await reportService.assignReport(reportId, staffId, staffName);
+      await loadData();
+      setShowAssignModal(false);
+      if (selectedReport?.id === reportId) {
+        const updated = await reportService.getReportById(reportId);
+        setSelectedReport(updated);
+      }
+    } catch (error) {
+      console.error("Error assigning report:", error);
+      alert("Failed to assign report");
+    }
+  };
+
+  const handleUnassign = async (reportId) => {
+    try {
+      await reportService.unassignReport(reportId);
+      await loadData();
+      if (selectedReport?.id === reportId) {
+        const updated = await reportService.getReportById(reportId);
+        setSelectedReport(updated);
+      }
+    } catch (error) {
+      console.error("Error unassigning report:", error);
+      alert("Failed to unassign report");
     }
   };
 
   const filteredReports = reports.filter((report) => {
     if (filter === "all") return true;
+    if (filter === "assigned") return report.isAssigned;
+    if (filter === "unassigned") return !report.isAssigned;
+    if (filter === "myReports") return report.assignedTo === user?.uid;
     return report.status.value === filter;
   });
 
@@ -123,6 +143,12 @@ const Reports = () => {
         return reports.filter((r) => r.status.value === "approved").length;
       case "rejected":
         return reports.filter((r) => r.status.value === "rejected").length;
+      case "assigned":
+        return reports.filter((r) => r.isAssigned).length;
+      case "unassigned":
+        return reports.filter((r) => !r.isAssigned).length;
+      case "myReports":
+        return reports.filter((r) => r.assignedTo === user?.uid).length;
       default:
         return 0;
     }
@@ -148,10 +174,35 @@ const Reports = () => {
         </p>
       </div>
 
+      {/* Stats */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-4 rounded-lg shadow">
+            <div className="text-2xl font-bold text-blue-800">{stats.total}</div>
+            <div className="text-sm text-blue-700">Total</div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow">
+            <div className="text-2xl font-bold text-yellow-800">{stats.pending}</div>
+            <div className="text-sm text-yellow-700">Pending</div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow">
+            <div className="text-2xl font-bold text-green-800">{stats.approved}</div>
+            <div className="text-sm text-green-700">Approved</div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow">
+            <div className="text-2xl font-bold text-purple-800">{stats.assigned}</div>
+            <div className="text-sm text-purple-700">Assigned</div>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="mb-6 flex flex-wrap gap-2">
         {[
           { key: "pending", label: "Pending" },
+          { key: "assigned", label: "Assigned" },
+          { key: "unassigned", label: "Unassigned" },
+          { key: "myReports", label: "My Reports" },
           { key: "approved", label: "Approved" },
           { key: "rejected", label: "Rejected" },
           { key: "all", label: "All" },
@@ -215,6 +266,9 @@ const Reports = () => {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Assigned To
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Submitted
@@ -292,6 +346,15 @@ const Reports = () => {
                         {report.status.displayName}
                       </span>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {report.assignedToName ? (
+                        <div className="text-sm text-gray-900">
+                          {report.assignedToName}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-400">Unassigned</div>
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {report.formattedCreatedAt.date}
                     </td>
@@ -303,39 +366,13 @@ const Reports = () => {
                         >
                           Review
                         </button>
-                        {user?.role !== "support" && (
-                          <>
-                            {/* Show Approve button if not approved */}
-                            {report.status.value !== "approved" && (
-                              <button
-                                onClick={() =>
-                                  handleStatusUpdate(
-                                    report.id,
-                                    ReportStatus.APPROVED.value,
-                                    "Report approved"
-                                  )
-                                }
-                                className="text-green-600 hover:text-green-900"
-                              >
-                                Approve
-                              </button>
-                            )}
-                            {/* Show Reject button if not rejected */}
-                            {report.status.value !== "rejected" && (
-                              <button
-                                onClick={() =>
-                                  handleStatusUpdate(
-                                    report.id,
-                                    ReportStatus.REJECTED.value,
-                                    "Report rejected"
-                                  )
-                                }
-                                className="text-red-600 hover:text-red-900"
-                              >
-                                Reject
-                              </button>
-                            )}
-                          </>
+                        {!report.isAssigned && (
+                          <button
+                            onClick={() => handleAssignToMe(report.id)}
+                            className="text-purple-600 hover:text-purple-900"
+                          >
+                            Assign to Me
+                          </button>
                         )}
                       </div>
                     </td>
@@ -482,6 +519,21 @@ const Reports = () => {
                           </span>
                           <span className="ml-2 text-gray-900">
                             {selectedReport.formattedUpdatedAt.full}
+                          </span>
+                        </div>
+                      )}
+                      {selectedReport.assignedToName && (
+                        <div>
+                          <span className="font-medium text-gray-700">
+                            Assigned To:
+                          </span>
+                          <span className="ml-2 text-gray-900">
+                            {selectedReport.assignedToName}
+                            {selectedReport.formattedAssignedAt && (
+                              <span className="text-xs text-gray-500 ml-2">
+                                ({selectedReport.formattedAssignedAt.date})
+                              </span>
+                            )}
                           </span>
                         </div>
                       )}
@@ -641,49 +693,123 @@ const Reports = () => {
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end space-x-3">
-                <button
-                  onClick={() => setSelectedReport(null)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-                >
-                  Close
-                </button>
-                {user?.role !== "support" && (
-                  <>
-                    {/* Show Approve button if not approved */}
-                    {selectedReport.status.value !== "approved" && (
+              <div className="mt-6 flex justify-between items-center">
+                <div className="flex space-x-2">
+                  {!selectedReport.isAssigned && (
+                    <button
+                      onClick={() => handleAssignToMe(selectedReport.id)}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                    >
+                      Assign to Me
+                    </button>
+                  )}
+                  {selectedReport.isAssigned && (
+                    <>
+                      {selectedReport.assignedTo === user?.uid && (
+                        <button
+                          onClick={() => handleUnassign(selectedReport.id)}
+                          className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                        >
+                          Unassign
+                        </button>
+                      )}
                       <button
-                        onClick={() =>
-                          handleStatusUpdate(
-                            selectedReport.id,
-                            ReportStatus.APPROVED.value,
-                            "Report approved after review"
-                          )
-                        }
-                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                        onClick={() => setShowAssignModal(true)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                       >
-                        Approve
+                        Reassign
                       </button>
-                    )}
-                    {/* Show Reject button if not rejected */}
-                    {selectedReport.status.value !== "rejected" && (
-                      <button
-                        onClick={() =>
-                          handleStatusUpdate(
-                            selectedReport.id,
-                            ReportStatus.REJECTED.value,
-                            "Report rejected after review"
-                          )
-                        }
-                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                      >
-                        Reject
-                      </button>
-                    )}
-                  </>
-                )}
+                    </>
+                  )}
+                  {!selectedReport.isAssigned && (
+                    <button
+                      onClick={() => setShowAssignModal(true)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    >
+                      Assign to Staff
+                    </button>
+                  )}
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setSelectedReport(null)}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                  >
+                    Close
+                  </button>
+                  {user?.role !== "support" && (
+                    <>
+                      {/* Show Approve button if not approved */}
+                      {selectedReport.status.value !== "approved" && (
+                        <button
+                          onClick={() =>
+                            handleStatusUpdate(
+                              selectedReport.id,
+                              ReportStatus.APPROVED.value,
+                              "Report approved after review"
+                            )
+                          }
+                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                        >
+                          Approve
+                        </button>
+                      )}
+                      {/* Show Reject button if not rejected */}
+                      {selectedReport.status.value !== "rejected" && (
+                        <button
+                          onClick={() =>
+                            handleStatusUpdate(
+                              selectedReport.id,
+                              ReportStatus.REJECTED.value,
+                              "Report rejected after review"
+                            )
+                          }
+                          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                        >
+                          Reject
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Modal */}
+      {showAssignModal && selectedReport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold mb-4">Assign Report</h3>
+            <div className="space-y-2 mb-4">
+              <h4 className="font-medium text-gray-700">Support Staff</h4>
+              {supportStaff.map((staff) => (
+                <button
+                  key={staff.uid}
+                  onClick={() =>
+                    handleAssignToStaff(
+                      selectedReport.id,
+                      staff.uid,
+                      staff.fullName || staff.displayName || staff.email
+                    )
+                  }
+                  className="w-full text-left px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  {staff.fullName || staff.displayName || staff.email}
+                </button>
+              ))}
+              {supportStaff.length === 0 && (
+                <p className="text-sm text-gray-500">No support staff available</p>
+              )}
+            </div>
+            <button
+              onClick={() => setShowAssignModal(false)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}

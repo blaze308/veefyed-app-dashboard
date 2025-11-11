@@ -88,7 +88,8 @@ A React-based admin panel for managing the Veefyed mobile app backend. This appl
 ### Super Administrator
 
 - Full system access including invite management
-- Can create invites for any role (including super admin)
+- Can create invites for any role (including super acd app/lib/db
+python product_validator.pydmin)
 - Can manage all users and invitations
 - Analytics and settings access
 - User management capabilities

@@ -19,6 +19,9 @@ export class Report {
     updatedAt = null,
     adminNotes = null,
     resolutionDetails = null,
+    assignedTo = null,
+    assignedToName = null,
+    assignedAt = null,
   }) {
     this.id = id;
     this.userId = userId;
@@ -34,6 +37,9 @@ export class Report {
     this.updatedAt = updatedAt;
     this.adminNotes = adminNotes;
     this.resolutionDetails = resolutionDetails;
+    this.assignedTo = assignedTo;
+    this.assignedToName = assignedToName;
+    this.assignedAt = assignedAt;
   }
 
   /**
@@ -65,6 +71,13 @@ export class Report {
         : null,
       adminNotes: data.adminNotes,
       resolutionDetails: data.resolutionDetails,
+      assignedTo: data.assignedTo,
+      assignedToName: data.assignedToName,
+      assignedAt: data.assignedAt?.toDate
+        ? data.assignedAt.toDate()
+        : data.assignedAt
+        ? new Date(data.assignedAt)
+        : null,
     });
   }
 
@@ -93,6 +106,13 @@ export class Report {
         : null,
       adminNotes: json.adminNotes,
       resolutionDetails: json.resolutionDetails,
+      assignedTo: json.assignedTo,
+      assignedToName: json.assignedToName,
+      assignedAt: json.assignedAt?.toDate
+        ? json.assignedAt.toDate()
+        : json.assignedAt
+        ? new Date(json.assignedAt)
+        : null,
     });
   }
 
@@ -114,6 +134,9 @@ export class Report {
       updatedAt: this.updatedAt,
       adminNotes: this.adminNotes,
       resolutionDetails: this.resolutionDetails,
+      assignedTo: this.assignedTo,
+      assignedToName: this.assignedToName,
+      assignedAt: this.assignedAt,
     };
   }
 
@@ -136,6 +159,9 @@ export class Report {
       updatedAt: this.updatedAt?.toISOString(),
       adminNotes: this.adminNotes,
       resolutionDetails: this.resolutionDetails,
+      assignedTo: this.assignedTo,
+      assignedToName: this.assignedToName,
+      assignedAt: this.assignedAt?.toISOString(),
     };
   }
 
@@ -157,6 +183,9 @@ export class Report {
     updatedAt,
     adminNotes,
     resolutionDetails,
+    assignedTo,
+    assignedToName,
+    assignedAt,
   }) {
     return new Report({
       id: id ?? this.id,
@@ -173,6 +202,9 @@ export class Report {
       updatedAt: updatedAt ?? this.updatedAt,
       adminNotes: adminNotes ?? this.adminNotes,
       resolutionDetails: resolutionDetails ?? this.resolutionDetails,
+      assignedTo: assignedTo ?? this.assignedTo,
+      assignedToName: assignedToName ?? this.assignedToName,
+      assignedAt: assignedAt ?? this.assignedAt,
     });
   }
 
@@ -239,6 +271,25 @@ export class Report {
    */
   get isRejected() {
     return this.status.value === "rejected";
+  }
+
+  /**
+   * Check if report is assigned
+   */
+  get isAssigned() {
+    return !!this.assignedTo;
+  }
+
+  /**
+   * Get formatted assignment date
+   */
+  get formattedAssignedAt() {
+    if (!this.assignedAt) return null;
+    return {
+      date: this.assignedAt.toLocaleDateString(),
+      time: this.assignedAt.toLocaleTimeString(),
+      full: this.assignedAt.toLocaleString(),
+    };
   }
 
   /**
